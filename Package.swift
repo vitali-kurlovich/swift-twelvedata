@@ -19,10 +19,14 @@ let package = Package(
             targets: ["TwelveData"]
         ),
     ],
+    traits: [
+        .trait(name: "TwelveDataLogging", description: "Enables websocket logging features"),
+        .default(enabledTraits: ["TwelveDataLogging"]),
+    ],
 
     dependencies: [
+        .package(url: "https://github.com/apple/swift-log", from: "1.15.1"),
         .package(url: "https://github.com/vitali-kurlovich/swift-io-stream", from: "0.0.3"),
-
     ],
     targets: [
         .target(
@@ -31,6 +35,12 @@ let package = Package(
                 .product(
                     name: "StreamWebSocket",
                     package: "swift-io-stream"
+                ),
+
+                .product(
+                    name: "Logging",
+                    package: "swift-log",
+                    condition: .when(traits: ["TwelveDataLogging"])
                 ),
             ]
 
