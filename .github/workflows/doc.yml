@@ -39,7 +39,7 @@ jobs:
         run: mkdir pages 
       
       - name: Generate DocC TwelveData
-        run: mkdir ./pages/twelvedata && swift package --allow-writing-to-directory ./.docs generate-documentation --target LoggingBootstrap --output-path ./.docs --disable-indexing --transform-for-static-hosting --hosting-base-path swift-twelvedata/twelvedata
+        run: mkdir ./pages/twelvedata && swift package --allow-writing-to-directory ./.docs generate-documentation --target TwelveData --output-path ./.docs --disable-indexing --transform-for-static-hosting --hosting-base-path swift-twelvedata/twelvedata
 
       - name: Copy generated content into pages dir
         run: cp -r ./.docs/* ./pages/twelvedata 
