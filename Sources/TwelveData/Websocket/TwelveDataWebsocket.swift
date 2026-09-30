@@ -96,6 +96,9 @@ public extension TwelveDataWebsocket {
     var state: AsyncStream<State> {
         AsyncStream<State> { continuation in
             let task = Task {
+
+                continuation.yield(State(await socket.state))
+
                 for await state in await socket.states {
                     let state = State(state)
                     continuation.yield(state)
