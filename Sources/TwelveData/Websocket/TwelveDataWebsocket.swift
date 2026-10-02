@@ -197,6 +197,14 @@ private extension TwelveDataWebsocket {
                 #if TwelveDataLogging
                     logger.info("Disconnect from server")
                 #endif
+            case let .didCompleteWithError(_, _, error):
+                subscribed = []
+#if TwelveDataLogging
+                logger
+                    .error(
+                        "didCompleteWithError from server: \(error?.localizedDescription)"
+                    )
+#endif
             }
         }
     }
