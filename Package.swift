@@ -7,10 +7,10 @@ let package = Package(
     name: "swift-twelvedata",
 
     platforms: [
-        .macOS(.v14),
-        .iOS(.v16),
-        .watchOS(.v10),
-        .tvOS(.v17),
+        .macOS(.v15),
+        .iOS(.v18),
+        .watchOS(.v11),
+        .tvOS(.v18),
     ],
 
     products: [
@@ -26,7 +26,7 @@ let package = Package(
 
     dependencies: [
         .package(url: "https://github.com/apple/swift-log", from: "1.15.1"),
-        .package(url: "https://github.com/vitali-kurlovich/swift-io-stream", from: "0.1.4"),
+        .package(url: "https://github.com/vitali-kurlovich/swift-io-stream", from: "0.1.5"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.1.0"),
     ],
     targets: [
