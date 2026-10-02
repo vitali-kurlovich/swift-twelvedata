@@ -47,7 +47,7 @@ public actor TwelveDataWebsocket {
     public private(set) var symbols: Set<String> = [] {
         didSet {
             if oldValue != symbols {
-                symbolsDidChange()
+                subscriptionsDidChange()
             }
         }
     }
@@ -62,15 +62,15 @@ public actor TwelveDataWebsocket {
     public private(set) var subscribed: Set<String> = [] {
         didSet {
             if oldValue != subscribed {
-                symbolsDidChange()
+                subscriptionsDidChange()
             }
         }
     }
 
     public private(set) var faild: Set<String> = [] {
         didSet {
-            if oldValue != subscribed {
-                symbolsDidChange()
+            if oldValue != faild {
+                subscriptionsDidChange()
             }
         }
     }
@@ -100,10 +100,10 @@ public extension TwelveDataWebsocket {
     }
 
     var states: AsyncStream<State> {
-        AsyncStream<State> { continuation in
+        AsyncStream<State>(
+            bufferingPolicy: .bufferingNewest(1)
+        ) { continuation in
             let task = Task {
-
-                continuation.yield(await state)
 
                 for await state in await socket.states {
                     let state = State(state)
@@ -185,7 +185,7 @@ private extension TwelveDataWebsocket {
         for await event in await socket.events {
             switch event {
             case .onConnect:
-                symbolsDidChange()
+                subscriptionsDidChange()
 
                 #if TwelveDataLogging
                     logger.info("Connect to server")
@@ -195,7 +195,7 @@ private extension TwelveDataWebsocket {
                 subscribed = []
 
                 #if TwelveDataLogging
-                    logger.info("Disconnect to server")
+                    logger.info("Disconnect from server")
                 #endif
             }
         }
@@ -264,7 +264,7 @@ private extension TwelveDataWebsocket {
         }
     }
 
-    func symbolsDidChange() {
+    func subscriptionsDidChange() {
         Task {
             do {
                 try await invalidateSubscription()
