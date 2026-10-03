@@ -93,6 +93,20 @@ public extension TwelveDataWebsocket {
 }
 
 public extension TwelveDataWebsocket {
+    func update(apiKey: String) {
+        configuration.apiKey = apiKey
+    }
+
+    func update(baseUrl: URL) {
+        configuration.baseUrl = baseUrl
+    }
+
+    func update(configuration: Configuration) {
+        self.configuration = configuration
+    }
+}
+
+public extension TwelveDataWebsocket {
     var state: State {
         get async {
             await State(socket.state)
@@ -197,14 +211,15 @@ private extension TwelveDataWebsocket {
                 #if TwelveDataLogging
                     logger.info("Disconnect from server")
                 #endif
+
             case let .didCompleteWithError(_, _, error):
                 subscribed = []
-#if TwelveDataLogging
-                logger
-                    .error(
-                        "didCompleteWithError from server: \(error?.localizedDescription)"
-                    )
-#endif
+                #if TwelveDataLogging
+                    logger
+                        .error(
+                            "didCompleteWithError from server: \(error?.localizedDescription)"
+                        )
+                #endif
             }
         }
     }
