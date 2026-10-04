@@ -4,6 +4,12 @@
 
 import Foundation
 
+#if TwelveDataLogging
+    import Logging
+
+    private let logger: Logger = .init(label: String(describing: TwelveDataREST.self))
+#endif
+
 extension TwelveDataREST {
     func fetch<T: Decodable>(_: T.Type, for url: URL) async throws(TwelveDataRESTError) -> T {
         do {
@@ -36,6 +42,10 @@ private extension TwelveDataREST {
         do {
             let request = request(for: url)
             let session = URLSession(configuration: sessionConfiguration)
+
+            #if TwelveDataLogging
+                logger.debug("Send request:\(request.debugDescription)")
+            #endif
 
             let (data, response) = try await session.data(for: request)
 
