@@ -4,7 +4,7 @@
 
 import Foundation
 
-struct TwelvedataEventResponse: Equatable, Decodable, Sendable {
+struct TwelveDataEventResponse: Equatable, Decodable, Sendable {
     enum Event: String, Decodable {
         case subscribeStatus = "subscribe-status"
         case price

@@ -247,7 +247,7 @@ private extension TwelveDataWebsocket {
         decoder.dateDecodingStrategy = .secondsSince1970
 
         do {
-            let response = try decoder.decode(TwelvedataEventResponse.self, from: json)
+            let response = try decoder.decode(TwelveDataEventResponse.self, from: json)
 
             switch response.event {
             case .price:
