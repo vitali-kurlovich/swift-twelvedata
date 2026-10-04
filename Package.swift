@@ -46,6 +46,10 @@ let package = Package(
             ]
 
         ),
+
+        .testTarget(name: "TwelveDataTest", dependencies: [
+            "TwelveData",
+        ]),
     ],
     swiftLanguageModes: [.v6]
 )

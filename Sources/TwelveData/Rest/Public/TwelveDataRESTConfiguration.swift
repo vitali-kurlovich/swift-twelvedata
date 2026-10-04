@@ -4,7 +4,6 @@
 
 import Foundation
 
-/// forex_pairs?apikey=demo
 private let baseURL = URL(string: "https://api.twelvedata.com")!
 
 public struct TwelveDataRESTConfiguration: Equatable, Sendable {
@@ -22,5 +21,3 @@ public extension TwelveDataRESTConfiguration {
         self.init(baseUrl: baseURL, apiKey: apiKey)
     }
 }
-
-// TwelveDataRESTConfiguration+URLBuilder
