@@ -5,7 +5,7 @@
 import Foundation
 
 extension TwelveDataRESTConfiguration {
-    func lastPriceURL(for symbol: String) -> URL {
+    nonisolated func lastPriceURL(for symbol: String) -> URL {
         let queryItem = URLQueryItem(name: "symbol", value: symbol)
 
         return buildURL(.price, queryItem)
@@ -13,7 +13,7 @@ extension TwelveDataRESTConfiguration {
 }
 
 extension TwelveDataRESTConfiguration {
-    var forexPairsURL: URL {
+    nonisolated var forexPairsURL: URL {
         buildURL(.forexPairs)
     }
 }

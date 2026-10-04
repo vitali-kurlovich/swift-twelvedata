@@ -31,7 +31,7 @@ extension TwelveDataREST {
 }
 
 private extension TwelveDataREST {
-    func request(for url: URL) -> URLRequest {
+    nonisolated func request(for url: URL) -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")

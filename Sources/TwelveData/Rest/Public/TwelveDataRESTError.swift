@@ -2,7 +2,7 @@
 //  Created by Kurlovich Vitali on 10/4/26.
 //
 
-public enum TwelveDataRESTError: Error, Equatable, Sendable {
+public nonisolated enum TwelveDataRESTError: Error, Equatable, Sendable {
     /**
 
      Invalid or incorrect parameter(s) provided.

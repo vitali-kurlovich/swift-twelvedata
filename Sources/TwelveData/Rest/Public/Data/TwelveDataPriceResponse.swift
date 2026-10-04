@@ -4,6 +4,6 @@
 
 import Foundation
 
-public struct TwelveDataPriceResponse: Equatable, Decodable, Sendable {
+public nonisolated struct TwelveDataPriceResponse: Equatable, Decodable, Sendable {
     public let price: Decimal
 }
