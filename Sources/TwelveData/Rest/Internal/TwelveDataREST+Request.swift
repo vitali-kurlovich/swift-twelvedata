@@ -11,7 +11,7 @@ import Foundation
 #endif
 
 extension TwelveDataREST {
-    func fetch<T: Decodable>(_: T.Type, for url: URL) async throws(TwelveDataRESTError) -> T {
+    nonisolated func fetch<T: Decodable>(_: T.Type, for url: URL) async throws(TwelveDataRESTError) -> T {
         do {
             let data = try await data(url: url)
 
@@ -38,7 +38,7 @@ private extension TwelveDataREST {
         return request
     }
 
-    func data(url: URL) async throws(TwelveDataRESTError) -> Data {
+    nonisolated func data(url: URL) async throws(TwelveDataRESTError) -> Data {
         do {
             let request = request(for: url)
             let session = URLSession(configuration: sessionConfiguration)

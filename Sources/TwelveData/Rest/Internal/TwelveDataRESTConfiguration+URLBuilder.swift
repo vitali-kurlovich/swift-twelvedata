@@ -36,7 +36,7 @@ extension TwelveDataRESTConfiguration {
 }
 
 extension TwelveDataPageConfiguration {
-    var queryItems: [URLQueryItem] {
+    nonisolated var queryItems: [URLQueryItem] {
         let page = URLQueryItem(name: "page", value: .init(self.page))
         let outputsize = URLQueryItem(name: "outputsize", value: .init(size))
         return [page, outputsize]

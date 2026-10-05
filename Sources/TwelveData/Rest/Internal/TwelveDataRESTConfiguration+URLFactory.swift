@@ -41,3 +41,13 @@ extension TwelveDataRESTConfiguration {
         buildURL(.stocks, page: page)
     }
 }
+
+extension TwelveDataRESTConfiguration {
+    nonisolated var commoditiesURL: URL {
+        buildURL(.commodities)
+    }
+
+    nonisolated func commoditiesURL(page: Page) -> URL {
+        buildURL(.commodities, page: page)
+    }
+}
