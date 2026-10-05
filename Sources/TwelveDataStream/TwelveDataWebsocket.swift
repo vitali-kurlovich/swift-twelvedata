@@ -59,6 +59,8 @@ public actor TwelveDataWebsocket {
 
     private var socketEventsTask: Task<Void, Never>?
 
+    private var sceduleSubscriptionInvalidationTask: Task<Void, Never>?
+
     public private(set) var subscribed: Set<String> = [] {
         didSet {
             if oldValue != subscribed {
@@ -287,9 +289,15 @@ private extension TwelveDataWebsocket {
         }
     }
 
-    func subscriptionsDidChange() {
-        Task {
+    func scheduleInvalidation() {
+        sceduleSubscriptionInvalidationTask?.cancel()
+
+        sceduleSubscriptionInvalidationTask = Task {
             do {
+                try await Task.sleep(nanoseconds: 100_000_000)
+                if Task.isCancelled {
+                    return
+                }
                 try await invalidateSubscription()
             } catch {
                 #if TwelveDataStreamLogging
@@ -297,6 +305,10 @@ private extension TwelveDataWebsocket {
                 #endif
             }
         }
+    }
+
+    func subscriptionsDidChange() {
+        scheduleInvalidation()
     }
 
     func invalidateSubscription() async throws {
