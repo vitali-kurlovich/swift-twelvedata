@@ -40,16 +40,16 @@ jobs:
       
 
       - name: Generate DocC TwelveDataStream
-        run: mkdir ./pages/stream && swift package --allow-writing-to-directory ./.docs generate-documentation --target TwelveDataStream --output-path ./.docs --disable-indexing --transform-for-static-hosting --hosting-base-path swift-twelvedata/stream
+        run: mkdir ./pages/twelvedatastream && swift package --allow-writing-to-directory ./.docs generate-documentation --target TwelveDataStream --output-path ./.docs --disable-indexing --transform-for-static-hosting --hosting-base-path swift-twelvedata/twelvedatastream
 
       - name: Copy generated content into pages dir
-        run: cp -r ./.docs/* ./pages/stream 
+        run: cp -r ./.docs/* ./pages/twelvedatastream 
 
       - name: Generate DocC TwelveDataREST
-        run: mkdir ./pages/rest && swift package --allow-writing-to-directory ./.docs generate-documentation --target TwelveDataREST --output-path ./.docs --disable-indexing --transform-for-static-hosting --hosting-base-path swift-twelvedata/rest
+        run: mkdir ./pages/twelvedatarest && swift package --allow-writing-to-directory ./.docs generate-documentation --target TwelveDataREST --output-path ./.docs --disable-indexing --transform-for-static-hosting --hosting-base-path swift-twelvedata/twelvedatarest
 
       - name: Copy generated content into pages dir
-        run: cp -r ./.docs/* ./pages/rest 
+        run: cp -r ./.docs/* ./pages/twelvedatarest 
 
 
       - name: Setup Pages
