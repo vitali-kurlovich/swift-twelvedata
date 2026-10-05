@@ -38,4 +38,4 @@ public nonisolated struct TwelveDataStock: Equatable, Decodable, Sendable {
     public let cusip: String
 }
 
-public typealias TwelveDataStocksResponse = TwelveDataPairsResponse<TwelveDataStock>
+public typealias TwelveDataStocksResponse = TwelveDataPageResponse<TwelveDataStock>

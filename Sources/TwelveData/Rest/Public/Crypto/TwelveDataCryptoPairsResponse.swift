@@ -16,4 +16,4 @@ public nonisolated struct TwelveDataCryptoPair: Equatable, Decodable, Sendable {
     public let currency_quote: String
 }
 
-public typealias TwelveDataCryptoPairsResponse = TwelveDataPairsResponse<TwelveDataCryptoPair>
+public typealias TwelveDataCryptoPairsResponse = TwelveDataPageResponse<TwelveDataCryptoPair>
