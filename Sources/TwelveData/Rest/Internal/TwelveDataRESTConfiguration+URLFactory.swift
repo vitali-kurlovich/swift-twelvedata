@@ -17,11 +17,27 @@ extension TwelveDataRESTConfiguration {
         buildURL(.forexPairs)
     }
 
+    nonisolated func forexPairsURL(page: Page) -> URL {
+        buildURL(.forexPairs, page: page)
+    }
+}
+
+extension TwelveDataRESTConfiguration {
     nonisolated var cryptoPairsURL: URL {
         buildURL(.cryptoPairs)
     }
 
+    nonisolated func cryptoPairsURL(page: Page) -> URL {
+        buildURL(.cryptoPairs, page: page)
+    }
+}
+
+extension TwelveDataRESTConfiguration {
     nonisolated var stocksURL: URL {
         buildURL(.stocks)
+    }
+
+    nonisolated func stocksURL(page: Page) -> URL {
+        buildURL(.stocks, page: page)
     }
 }

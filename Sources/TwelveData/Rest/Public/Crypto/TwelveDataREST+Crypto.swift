@@ -30,4 +30,26 @@ public extension TwelveDataREST {
             throw error
         }
     }
+
+    /**
+     Cryptocurrency pairs
+
+     The cryptocurrencies endpoint provides a daily updated list of all available cryptos. It returns an array containing detailed information about each cryptocurrency, including its symbol, name, and other relevant identifiers. This endpoint is useful for retrieving a comprehensive catalog of cryptocurrencies for applications that require up-to-date market listings or need to display available crypto assets to users.
+
+     More info avalible in [API Docs](https://twelvedata.com/docs/asset-catalogs/cryptocurrencies-list)
+     */
+    func cryptoPairs(page: Page) async throws(TwelveDataRESTError) -> TwelveDataCryptoPairsResponse {
+        do {
+            return try await fetch(
+                TwelveDataCryptoPairsResponse.self,
+                for: configuration.cryptoPairsURL(page: page)
+            )
+        } catch {
+            #if TwelveDataLogging
+                logger.error("Error at fetching crypto pairs data:\(error.localizedDescription)")
+            #endif
+
+            throw error
+        }
+    }
 }

@@ -30,4 +30,26 @@ public extension TwelveDataREST {
             throw error
         }
     }
+
+    /**
+     Forex pairs
+
+     The forex pairs endpoint provides a comprehensive list of all available foreign exchange currency pairs. It returns an array of forex pairs, which is updated daily.
+
+     More info avalible in [API Docs](https://twelvedata.com/docs/asset-catalogs/forex-pairs-list)
+     */
+    func forexPairs(page: Page) async throws(TwelveDataRESTError) -> TwelveDataForexPairsResponse {
+        do {
+            return try await fetch(
+                TwelveDataForexPairsResponse.self,
+                for: configuration.forexPairsURL(page: page)
+            )
+        } catch {
+            #if TwelveDataLogging
+                logger.error("Error at fetching forex pairs data:\(error.localizedDescription)")
+            #endif
+
+            throw error
+        }
+    }
 }
