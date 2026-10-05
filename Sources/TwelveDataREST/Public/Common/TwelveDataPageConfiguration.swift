@@ -7,4 +7,9 @@ public nonisolated struct TwelveDataPageConfiguration: Equatable, Sendable {
     let page: Int
     /// Determines the number of data points returned in the output. If not specified, all available records are returned
     let size: Int
+
+    public init(page: Int, size: Int) {
+        self.page = page
+        self.size = size
+    }
 }
