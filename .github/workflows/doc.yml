@@ -38,13 +38,20 @@ jobs:
       - name: Make dir for static content
         run: mkdir pages 
       
-      - name: Generate DocC TwelveData
-        run: mkdir ./pages/twelvedata && swift package --allow-writing-to-directory ./.docs generate-documentation --target TwelveData --output-path ./.docs --disable-indexing --transform-for-static-hosting --hosting-base-path swift-twelvedata/twelvedata
+
+      - name: Generate DocC TwelveDataStream
+        run: mkdir ./pages/stream && swift package --allow-writing-to-directory ./.docs generate-documentation --target TwelveDataStream --output-path ./.docs --disable-indexing --transform-for-static-hosting --hosting-base-path swift-twelvedata/stream
 
       - name: Copy generated content into pages dir
-        run: cp -r ./.docs/* ./pages/twelvedata 
+        run: cp -r ./.docs/* ./pages/stream 
 
-      
+      - name: Generate DocC TwelveDataREST
+        run: mkdir ./pages/rest && swift package --allow-writing-to-directory ./.docs generate-documentation --target TwelveDataREST --output-path ./.docs --disable-indexing --transform-for-static-hosting --hosting-base-path swift-twelvedata/rest
+
+      - name: Copy generated content into pages dir
+        run: cp -r ./.docs/* ./pages/rest 
+
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

@@ -15,13 +15,19 @@ let package = Package(
 
     products: [
         .library(
-            name: "TwelveData",
-            targets: ["TwelveData"]
+            name: "TwelveDataStream",
+            targets: ["TwelveDataStream"]
         ),
+        
+            .library(
+                name: "TwelveDataREST",
+                targets: ["TwelveDataREST"]
+            ),
     ],
     traits: [
-        .trait(name: "TwelveDataLogging", description: "Enables websocket logging features"),
-        .default(enabledTraits: ["TwelveDataLogging"]),
+        .trait(name: "TwelveDataStreamLogging", description: "Enables websocket logging features"),
+        .trait(name: "TwelveDataRESTLogging", description: "Enables REST logging features"),
+        .default(enabledTraits: ["TwelveDataStreamLogging", "TwelveDataRESTLogging"]),
     ],
 
     dependencies: [
@@ -31,7 +37,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "TwelveData",
+            name: "TwelveDataStream",
             dependencies: [
                 .product(
                     name: "StreamWebSocket",
@@ -41,14 +47,27 @@ let package = Package(
                 .product(
                     name: "Logging",
                     package: "swift-log",
-                    condition: .when(traits: ["TwelveDataLogging"])
+                    condition: .when(traits: ["TwelveDataStreamLogging"])
                 ),
             ]
 
         ),
+        
+            .target(
+                name: "TwelveDataREST",
+                dependencies: [
+                    
+                    .product(
+                        name: "Logging",
+                        package: "swift-log",
+                        condition: .when(traits: ["TwelveDataRESTLogging"])
+                    ),
+                ]
+
+            ),
 
         .testTarget(name: "TwelveDataTest", dependencies: [
-            "TwelveData",
+            "TwelveDataREST",
         ]),
     ],
     swiftLanguageModes: [.v6]

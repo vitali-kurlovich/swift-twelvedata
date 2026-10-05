@@ -4,7 +4,7 @@
 
 import Foundation
 
-#if TwelveDataLogging
+#if TwelveDataRESTLogging
     import Logging
 
     private let logger: Logger = .init(label: String(describing: TwelveDataREST.self))
@@ -43,7 +43,7 @@ private extension TwelveDataREST {
             let request = request(for: url)
             let session = URLSession(configuration: sessionConfiguration)
 
-            #if TwelveDataLogging
+            #if TwelveDataRESTLogging
                 logger.debug("Send request:\(request.debugDescription)")
             #endif
 

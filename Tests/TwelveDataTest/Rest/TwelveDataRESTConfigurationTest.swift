@@ -4,7 +4,7 @@
 
 import Foundation
 import Testing
-@testable import TwelveData
+@testable import TwelveDataREST
 
 private let testBaseURL = URL(string: "https://test.dev")!
 private let testApiKey = "test_api"

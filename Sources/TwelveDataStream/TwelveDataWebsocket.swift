@@ -5,7 +5,7 @@
 import Foundation
 import StreamWebSocket
 
-#if TwelveDataLogging
+#if TwelveDataStreamLogging
     import Logging
 
     private let logger: Logger = .init(label: String(describing: TwelveDataWebsocket.self))
@@ -123,13 +123,13 @@ public extension TwelveDataWebsocket {
                     let state = State(state)
                     continuation.yield(state)
 
-                    #if TwelveDataLogging
+                    #if TwelveDataStreamLogging
                         logger.debug("Send state change to stream: \(state)")
                     #endif
                 }
                 continuation.finish()
 
-                #if TwelveDataLogging
+                #if TwelveDataStreamLogging
                     logger.debug("Finish state stream")
                 #endif
             }
@@ -137,7 +137,7 @@ public extension TwelveDataWebsocket {
             continuation.onTermination = { _ in
                 task.cancel()
 
-                #if TwelveDataLogging
+                #if TwelveDataStreamLogging
                     logger.debug("Cancel state stream")
                 #endif
             }
@@ -150,20 +150,20 @@ public extension TwelveDataWebsocket {
                 for await price in priceEvents {
                     continuation.yield(price)
 
-                    #if TwelveDataLogging
+                    #if TwelveDataStreamLogging
                         logger.debug("Send price to stream: \(price)")
                     #endif
                 }
                 continuation.finish()
 
-                #if TwelveDataLogging
+                #if TwelveDataStreamLogging
                     logger.debug("Finish prices stream")
                 #endif
             }
 
             continuation.onTermination = { _ in
                 task.cancel()
-                #if TwelveDataLogging
+                #if TwelveDataStreamLogging
                     logger.debug("Csncel prices stream")
                 #endif
             }
@@ -173,7 +173,7 @@ public extension TwelveDataWebsocket {
     func subscribe<S: Sequence>(symbols insert: S) where S.Element == String {
         symbols = symbols.union(insert)
 
-        #if TwelveDataLogging
+        #if TwelveDataStreamLogging
             logger.debug("Subscribe symbols:\(insert)")
         #endif
     }
@@ -181,7 +181,7 @@ public extension TwelveDataWebsocket {
     func unsubscribe<S: Sequence>(symbols removed: S) where S.Element == String {
         symbols = symbols.subtracting(removed)
 
-        #if TwelveDataLogging
+        #if TwelveDataStreamLogging
             logger.debug("Unsubscribe symbols:\(removed)")
         #endif
     }
@@ -201,20 +201,20 @@ private extension TwelveDataWebsocket {
             case .onConnect:
                 subscriptionsDidChange()
 
-                #if TwelveDataLogging
+                #if TwelveDataStreamLogging
                     logger.info("Connect to server")
                 #endif
 
             case .onDisconnet:
                 subscribed = []
 
-                #if TwelveDataLogging
+                #if TwelveDataStreamLogging
                     logger.info("Disconnect from server")
                 #endif
 
             case let .didCompleteWithError(_, _, error):
                 subscribed = []
-                #if TwelveDataLogging
+                #if TwelveDataStreamLogging
                     logger
                         .error(
                             "didCompleteWithError from server: \(error?.localizedDescription)"
@@ -234,7 +234,7 @@ private extension TwelveDataWebsocket {
                 if let data = string.data(using: .utf8) {
                     onMessage(data)
                 } else {
-                    #if TwelveDataLogging
+                    #if TwelveDataStreamLogging
                         logger.error("Can't convert string to Data \(string)")
                     #endif
                 }
@@ -254,7 +254,7 @@ private extension TwelveDataWebsocket {
                 let price = try decoder.decode(TwelvedataPriceEvent.self, from: json)
 
                 priceEventsContinuation.yield(price)
-                #if TwelveDataLogging
+                #if TwelveDataStreamLogging
                     logger.debug("Recieve price: \(price)")
                 #endif
 
@@ -270,18 +270,18 @@ private extension TwelveDataWebsocket {
                 let failsSubscriptions = subscribeStatus.fails?.map(\.symbol) ?? []
 
                 faild = faild.union(failsSubscriptions)
-                #if TwelveDataLogging
+                #if TwelveDataStreamLogging
                     logger.debug("Recieve subscribeStatus: success:\(success), faild:\(faild)")
                 #endif
 
             case .heartbeat:
-                #if TwelveDataLogging
+                #if TwelveDataStreamLogging
                     logger.debug("Recieve heartbeat")
                 #endif
             }
 
         } catch {
-            #if TwelveDataLogging
+            #if TwelveDataStreamLogging
                 logger.error("Catch error: \(error.localizedDescription)")
             #endif
         }
@@ -292,7 +292,7 @@ private extension TwelveDataWebsocket {
             do {
                 try await invalidateSubscription()
             } catch {
-                #if TwelveDataLogging
+                #if TwelveDataStreamLogging
                     logger.error("Catch error: \(error.localizedDescription)")
                 #endif
             }
@@ -323,7 +323,7 @@ private extension TwelveDataWebsocket {
                 try await socket.send(json)
             }
 
-            #if TwelveDataLogging
+            #if TwelveDataStreamLogging
                 logger.debug("Subscribe for: \(needsSubsribe)")
             #endif
         }
@@ -336,7 +336,7 @@ private extension TwelveDataWebsocket {
                 try await socket.send(json)
             }
 
-            #if TwelveDataLogging
+            #if TwelveDataStreamLogging
                 logger.debug("Unsubscribe for: \(needsUnSubsribe)")
             #endif
         }
@@ -346,7 +346,7 @@ private extension TwelveDataWebsocket {
         Task {
             await socket.update(configuration: .init(configuration))
         }
-        #if TwelveDataLogging
+        #if TwelveDataStreamLogging
             logger.debug("Update configuration")
         #endif
     }

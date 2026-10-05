@@ -2,7 +2,7 @@
 //  Created by Kurlovich Vitali on 10/5/26.
 //
 
-#if TwelveDataLogging
+#if TwelveDataRESTLogging
     import Logging
 
     private let logger: Logger = .init(label: String(describing: TwelveDataREST.self))
@@ -23,7 +23,7 @@ public extension TwelveDataREST {
                 for: configuration.commoditiesURL
             )
         } catch {
-            #if TwelveDataLogging
+            #if TwelveDataRESTLogging
                 logger.error("Error at fetching commodities list data:\(error.localizedDescription)")
             #endif
 
@@ -45,7 +45,7 @@ public extension TwelveDataREST {
                 for: configuration.commoditiesURL(page: page)
             )
         } catch {
-            #if TwelveDataLogging
+            #if TwelveDataRESTLogging
                 logger.error("Error at fetching commodities list data:\(error.localizedDescription)")
             #endif
 
