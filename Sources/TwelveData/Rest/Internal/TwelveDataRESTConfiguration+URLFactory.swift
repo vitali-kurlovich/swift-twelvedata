@@ -16,4 +16,8 @@ extension TwelveDataRESTConfiguration {
     nonisolated var forexPairsURL: URL {
         buildURL(.forexPairs)
     }
+
+    nonisolated var cryptoPairsURL: URL {
+        buildURL(.cryptoPairs)
+    }
 }

@@ -4,11 +4,6 @@
 
 import Foundation
 
-enum Command: String {
-    case price
-    case forexPairs = "forex_pairs"
-}
-
 extension TwelveDataRESTConfiguration {
     nonisolated func buildURL(_ command: Command, _ queryItems: [URLQueryItem] = []) -> URL {
         var queryItems = queryItems
