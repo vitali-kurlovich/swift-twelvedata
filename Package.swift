@@ -18,11 +18,11 @@ let package = Package(
             name: "TwelveDataStream",
             targets: ["TwelveDataStream"]
         ),
-        
-            .library(
-                name: "TwelveDataREST",
-                targets: ["TwelveDataREST"]
-            ),
+
+        .library(
+            name: "TwelveDataREST",
+            targets: ["TwelveDataREST"]
+        ),
     ],
     traits: [
         .trait(name: "TwelveDataStreamLogging", description: "Enables websocket logging features"),
@@ -52,19 +52,18 @@ let package = Package(
             ]
 
         ),
-        
-            .target(
-                name: "TwelveDataREST",
-                dependencies: [
-                    
-                    .product(
-                        name: "Logging",
-                        package: "swift-log",
-                        condition: .when(traits: ["TwelveDataRESTLogging"])
-                    ),
-                ]
 
-            ),
+        .target(
+            name: "TwelveDataREST",
+            dependencies: [
+                .product(
+                    name: "Logging",
+                    package: "swift-log",
+                    condition: .when(traits: ["TwelveDataRESTLogging"])
+                ),
+            ]
+
+        ),
 
         .testTarget(name: "TwelveDataTest", dependencies: [
             "TwelveDataREST",
