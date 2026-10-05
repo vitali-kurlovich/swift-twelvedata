@@ -20,4 +20,8 @@ extension TwelveDataRESTConfiguration {
     nonisolated var cryptoPairsURL: URL {
         buildURL(.cryptoPairs)
     }
+
+    nonisolated var stocksURL: URL {
+        buildURL(.stocks)
+    }
 }
