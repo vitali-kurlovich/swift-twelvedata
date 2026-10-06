@@ -1,0 +1,38 @@
+@startuml
+
+title TwelveDataRESTError
+
+struct TwelveDataRESTErrorResponse {
+    +  code: Int
+    + message: String
+}
+
+struct TwelveDataRESTURLSessionError {
+    + localizedDescription: String
+}
+
+struct TwelveDataRESTJSONDecodicgError {
+     + localizedDescription: String
+}
+
+enum TwelveDataRESTError {
+    badRequest(TwelveDataRESTErrorResponse)
+    unauthor­ized(TwelveDataRESTErrorResponse)
+    forbidden(TwelveDataRESTErrorResponse)
+    notFound(TwelveDataRESTErrorResponse)
+    parameterTooLong(TwelveDataRESTErrorResponse)
+    tooManyRequests(TwelveDataRESTErrorResponse)
+    internalServerError(TwelveDataRESTErrorResponse)
+    urlSessionError(TwelveDataRESTURLSessionError)
+    unknownServerError(TwelveDataRESTErrorResponse)
+    responseDecodingError(TwelveDataRESTJSONDecodicgError)
+    unknown
+}
+
+TwelveDataRESTError *-- TwelveDataRESTErrorResponse
+TwelveDataRESTError *-- TwelveDataRESTURLSessionError
+TwelveDataRESTError *-- TwelveDataRESTJSONDecodicgError
+
+TwelveDataRESTError --|> Error
+
+@enduml

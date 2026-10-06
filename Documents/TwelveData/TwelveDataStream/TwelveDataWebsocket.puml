@@ -1,0 +1,43 @@
+@startuml
+
+title TwelveDataWebsocket
+
+struct TwelveDataWebsocketConfiguration {
+    + baseUrl: URL
+    + apiKey: String
+}
+
+enum TwelveDataWebsocketState {
+    disconnected
+    connecting
+    connected
+    reconnecting
+    failed
+}
+
+struct TwelvedataPriceEvent {
+    + type: String
+    + price: Decimal
+    + day_volume: Decimal?
+    + currency: String?
+    + exchange: String?
+    + timestamp: Date
+}
+
+class TwelveDataWebsocket {
+    - socket: WebSocket
+
+    + configuration: Configuration
+    + state: TwelveDataWebsocketState
+    + states: Stream<TwelveDataWebsocketState>
+    + prices: Stream<TwelvedataPriceEvent>
+    + subscribe(Sequence<String>)
+    + unsubscribe(Sequence<String>)
+}
+
+TwelveDataWebsocket *--  TwelveDataWebsocketConfiguration
+TwelveDataWebsocket *--  TwelveDataWebsocketState
+TwelveDataWebsocket *--  TwelvedataPriceEvent
+
+@enduml
+

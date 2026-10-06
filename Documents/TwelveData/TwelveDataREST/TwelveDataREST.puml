@@ -1,0 +1,40 @@
+@startuml
+
+title TwelveDataREST
+!include TwelveDataRESTError.puml
+
+struct TwelveDataRESTConfiguration {
+    + apiKey: String
+    + baseURL: URL
+}
+
+struct TwelveDataREST {
+    + sessionConfiguration: URLSessionConfiguration
+    +  configuration: TwelveDataRESTConfiguration
+}
+
+
+TwelveDataREST : commodities(page: Page) async throws(TwelveDataRESTError) -> TwelveDataCommoditiesResponse
+TwelveDataREST : commodities() async throws(TwelveDataRESTError) -> TwelveDataCommoditiesResponse
+
+TwelveDataREST : cryptoPairs(page: Page) async throws(TwelveDataRESTError) -> TwelveDataCryptoPairsResponse
+TwelveDataREST : cryptoPairs() async throws(TwelveDataRESTError) -> TwelveDataCryptoPairsResponse
+
+TwelveDataREST : stocks(page: Page) async throws(TwelveDataRESTError) -> TwelveDataStocksResponse
+TwelveDataREST : stocks() async throws(TwelveDataRESTError) -> TwelveDataStocksResponse
+
+TwelveDataREST : forexPairs(page: Page) async throws(TwelveDataRESTError) -> TwelveDataForexPairsResponse 
+TwelveDataREST : forexPairs() async throws(TwelveDataRESTError) -> TwelveDataForexPairsResponse 
+
+
+TwelveDataREST *-- TwelveDataRESTConfiguration
+TwelveDataREST *-- TwelveDataRESTError
+
+@enduml
+
+/*
+
+
+
+
+*/

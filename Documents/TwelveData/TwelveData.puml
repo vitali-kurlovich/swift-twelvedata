@@ -1,0 +1,19 @@
+@startuml
+
+
+title  TwelveData
+
+
+package "swift-twelvedata" {
+
+    package "TwelveDataREST" {
+        !include TwelveDataREST/TwelveDataREST.puml
+    }
+
+    package "TwelveDataStream" {
+        !include TwelveDataStream/TwelveDataWebsocket.puml
+    }
+}
+
+
+@enduml
