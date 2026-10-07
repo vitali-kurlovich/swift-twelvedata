@@ -1,0 +1,11 @@
+@startuml
+
+!include TwelveDataForexPair.puml
+
+
+TwelveDataREST : forexPairs(page: Page) async throws(TwelveDataRESTError) -> TwelveDataForexPairsResponse 
+TwelveDataREST : forexPairs() async throws(TwelveDataRESTError) -> TwelveDataForexPairsResponse 
+
+TwelveDataREST *-- TwelveDataForexPairsResponse
+
+@enduml

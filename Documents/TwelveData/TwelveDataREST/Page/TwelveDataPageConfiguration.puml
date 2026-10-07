@@ -1,0 +1,14 @@
+@startuml
+
+title TwelveDataPageConfiguration
+
+struct TwelveDataPageConfiguration {
+    + page: Int
+    + size: Int
+}
+
+struct "TwelveDataPageConfiguration" as Page
+
+
+
+@enduml

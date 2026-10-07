@@ -1,0 +1,21 @@
+@startuml
+
+!include ../Page/TwelveDataPageResponse.puml
+
+title TwelveDataCommodity
+
+struct TwelveDataCommodity {
+    + symbol: String
+    + name: String
+    + category: String
+    + description: String
+}
+
+
+struct "TwelveDataPageResponse<TwelveDataCommodity>" as TwelveDataCommoditiesResponse
+
+TwelveDataCommoditiesResponse *-- TwelveDataCommodity
+
+
+
+@enduml

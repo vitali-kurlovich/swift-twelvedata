@@ -1,0 +1,20 @@
+@startuml
+
+!include ../Page/TwelveDataPageResponse.puml
+
+title TwelveDataCryptoPair
+
+struct TwelveDataCryptoPair {
+    + symbol: String
+    + vailable_exchanges: [String]
+    + currency_base: String
+    + currency_quote: String
+}
+
+struct "TwelveDataPageResponse<TwelveDataCryptoPair>" as TwelveDataCryptoPairsResponse
+
+TwelveDataCryptoPairsResponse *-- TwelveDataCryptoPair
+
+
+@enduml
+

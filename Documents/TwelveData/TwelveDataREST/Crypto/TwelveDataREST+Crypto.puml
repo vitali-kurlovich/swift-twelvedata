@@ -1,0 +1,10 @@
+@startuml
+
+!include TwelveDataCryptoPair.puml
+
+TwelveDataREST : cryptoPairs(page: Page) async throws(TwelveDataRESTError) -> TwelveDataCryptoPairsResponse
+TwelveDataREST : cryptoPairs() async throws(TwelveDataRESTError) -> TwelveDataCryptoPairsResponse
+
+TwelveDataREST *-- TwelveDataCryptoPairsResponse
+
+@enduml

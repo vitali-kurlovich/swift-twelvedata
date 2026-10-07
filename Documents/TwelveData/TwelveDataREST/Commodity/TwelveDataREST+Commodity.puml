@@ -1,0 +1,20 @@
+@startuml
+
+!include TwelveDataCommodity.puml
+
+
+title TwelveDataCommodity
+
+
+TwelveDataREST : commodities(page: Page) async throws(TwelveDataRESTError) -> TwelveDataCommoditiesResponse
+TwelveDataREST : commodities() async throws(TwelveDataRESTError) -> TwelveDataCommoditiesResponse
+
+TwelveDataREST *-- TwelveDataCommoditiesResponse
+
+@enduml
+/*
+
+
+
+
+*/

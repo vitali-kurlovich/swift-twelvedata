@@ -1,0 +1,14 @@
+@startuml
+
+title TwelveDataPageResponse
+
+struct TwelveDataPageResponse<T> {
+ + count: Int
+ + data: [T]
+ + status: String
+}
+
+
+
+@enduml
+

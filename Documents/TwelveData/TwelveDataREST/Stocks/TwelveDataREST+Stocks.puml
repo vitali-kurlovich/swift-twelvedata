@@ -1,0 +1,11 @@
+@startuml
+
+!include TwelveDataStock.puml
+
+ 
+TwelveDataREST : stocks(page: Page) async throws(TwelveDataRESTError) -> TwelveDataStocksResponse
+TwelveDataREST : stocks() async throws(TwelveDataRESTError) -> TwelveDataStocksResponse
+
+TwelveDataREST *-- TwelveDataStocksResponse
+
+@enduml

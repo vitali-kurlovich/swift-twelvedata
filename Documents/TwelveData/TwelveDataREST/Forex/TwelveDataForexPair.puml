@@ -1,0 +1,21 @@
+@startuml
+
+!include ../Page/TwelveDataPageResponse.puml
+
+title TwelveDataForexPair
+
+struct TwelveDataForexPair {
+    + symbol: String
+    + urrency_group: String
+    + currency_base: String
+    + currency_quote: String
+}
+
+
+struct "TwelveDataPageResponse<TwelveDataForexPair>" as TwelveDataForexPairsResponse
+
+TwelveDataForexPairsResponse *-- TwelveDataForexPair
+
+
+@enduml
+

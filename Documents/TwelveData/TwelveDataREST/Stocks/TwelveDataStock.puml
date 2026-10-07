@@ -1,0 +1,26 @@
+@startuml
+
+!include ../Page/TwelveDataPageResponse.puml
+title  TwelveDataStock
+
+struct TwelveDataStock {
+    + symbol: String
+    +  name: String?
+    + currency: String?
+    + exchange: String?
+    + mic_code: String?
+    + country: String?
+    + type: String?
+    + figi_code: String?
+    + cfi_code: String?
+    + isin: String?
+    + cusip: String?
+}
+
+struct "TwelveDataPageResponse<TwelveDataStock>" as TwelveDataStocksResponse
+
+TwelveDataStocksResponse *-- TwelveDataStock
+
+
+
+@enduml
