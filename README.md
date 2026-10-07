@@ -12,4 +12,4 @@ For more info, you can read:
  
 
 
-  <img width="760" height="203" alt="image" src="https://raw.githubusercontent.com/vitali-kurlovich/swift-twelvedata/e96311976404e2c8a6dd251efb51b02d71f66dcb/Documents/TwelveData/out/TwelveData/TwelveData.svg" />
+  <img width="760" height="203" alt="image" src="https://raw.githubusercontent.com/vitali-kurlovich/swift-twelvedata/d34f7e8cf51575ecba7a08d3c5de2a508b866e0c/Documents/TwelveData/out/TwelveData/TwelveData.svg" />
