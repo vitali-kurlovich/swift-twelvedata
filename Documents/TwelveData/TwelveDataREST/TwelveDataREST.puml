@@ -13,8 +13,6 @@ struct TwelveDataREST {
     + configuration: TwelveDataRESTConfiguration
 }
 
-
-
 TwelveDataREST *-- TwelveDataRESTConfiguration
 TwelveDataREST *-- TwelveDataRESTError
 TwelveDataREST *-- Page
