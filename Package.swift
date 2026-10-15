@@ -23,6 +23,7 @@ let package = Package(
             name: "TwelveDataREST",
             targets: ["TwelveDataREST"]
         ),
+
     ],
     traits: [
         .trait(name: "TwelveDataStreamLogging", description: "Enables websocket logging features"),
