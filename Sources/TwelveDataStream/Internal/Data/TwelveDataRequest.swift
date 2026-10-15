@@ -4,15 +4,15 @@
 
 import Foundation
 
-struct TwelveDataRequest: Encodable, Sendable {
-    enum Action: String, Encodable, Sendable {
+struct TwelveDataRequest: Equatable, Encodable, Sendable {
+    enum Action: String, Equatable, Encodable, Sendable {
         case subscribe
         case unsubscribe
         case heartbeat
         case reset
     }
 
-    struct Params: Encodable, Sendable {
+    struct Params: Equatable, Encodable, Sendable {
         let symbols: String
     }
 

@@ -31,6 +31,8 @@ public actor TwelveDataWebsocket {
         priceEventsContinuation = priceContinuation
 
         Task {
+            await coordinator.setSocket(self)
+
             await subscribeSocketEventsIfNeeds()
             await subscribeMessages()
         }
@@ -44,14 +46,6 @@ public actor TwelveDataWebsocket {
         }
     }
 
-    public private(set) var symbols: Set<String> = [] {
-        didSet {
-            if oldValue != symbols {
-                subscriptionsDidChange()
-            }
-        }
-    }
-
     private let socket: WebSocket
 
     private let priceEvents: AsyncStream<TwelvedataPriceEvent>
@@ -61,21 +55,7 @@ public actor TwelveDataWebsocket {
 
     private var sceduleSubscriptionInvalidationTask: Task<Void, Never>?
 
-    public private(set) var subscribed: Set<String> = [] {
-        didSet {
-            if oldValue != subscribed {
-                subscriptionsDidChange()
-            }
-        }
-    }
-
-    public private(set) var faild: Set<String> = [] {
-        didSet {
-            if oldValue != faild {
-                subscriptionsDidChange()
-            }
-        }
-    }
+    private var coordinator = SubscriptionsCoordinator()
 }
 
 public extension TwelveDataWebsocket {
@@ -172,20 +152,36 @@ public extension TwelveDataWebsocket {
         }
     }
 
-    func subscribe<S: Sequence>(symbols insert: S) where S.Element == String {
-        symbols = symbols.union(insert)
+    func subscribe<S: Sequence>(symbols insert: S) async throws where S.Element == String {
+        try await coordinator.subscribe(.init(insert))
 
-        #if TwelveDataStreamLogging
-            logger.debug("Subscribe symbols:\(insert)")
-        #endif
+        if await coordinator.subscriptions.isEmpty == false, await socket.state != .connected {
+            await socket.connect()
+        }
     }
 
-    func unsubscribe<S: Sequence>(symbols removed: S) where S.Element == String {
-        symbols = symbols.subtracting(removed)
+    func unsubscribe<S: Sequence>(symbols removed: S) async throws where S.Element == String {
+        try await coordinator.unsubscribe(.init(removed))
 
-        #if TwelveDataStreamLogging
-            logger.debug("Unsubscribe symbols:\(removed)")
-        #endif
+        if await coordinator.subscriptions.isEmpty, await socket.state == .connected {
+            await socket.disconnect()
+        }
+    }
+}
+
+extension TwelveDataWebsocket {
+    func recieve(price: TwelvedataPriceEvent) {
+        priceEventsContinuation.yield(price)
+    }
+
+    func send(_ request: TwelveDataRequest) async throws {
+        let encoder = JSONEncoder()
+
+        let data = try encoder.encode(request)
+
+        if let json = String(data: data, encoding: .utf8) {
+            try await socket.send(json)
+        }
     }
 }
 
@@ -201,21 +197,28 @@ private extension TwelveDataWebsocket {
         for await event in await socket.events {
             switch event {
             case .onConnect:
-                subscriptionsDidChange()
+                do {
+                    try await coordinator.connect()
+                } catch {
+                    #if TwelveDataStreamLogging
+                        logger.error("\(error.localizedDescription)")
+                    #endif
+                }
 
                 #if TwelveDataStreamLogging
                     logger.info("Connect to server")
                 #endif
 
             case .onDisconnet:
-                subscribed = []
+                await coordinator.disconnect()
 
                 #if TwelveDataStreamLogging
                     logger.info("Disconnect from server")
                 #endif
 
             case let .didCompleteWithError(_, _, error):
-                subscribed = []
+                await coordinator.disconnect()
+
                 #if TwelveDataStreamLogging
                     logger
                         .error(
@@ -230,11 +233,11 @@ private extension TwelveDataWebsocket {
         for await message in await socket.messages {
             switch message {
             case let .data(data):
-                onMessage(data)
+                await onMessage(data)
 
             case let .text(string):
                 if let data = string.data(using: .utf8) {
-                    onMessage(data)
+                    await onMessage(data)
                 } else {
                     #if TwelveDataStreamLogging
                         logger.error("Can't convert string to Data \(string)")
@@ -244,106 +247,21 @@ private extension TwelveDataWebsocket {
         }
     }
 
-    func onMessage(_ json: Data) {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .secondsSince1970
+    func onMessage(_ json: Data) async {
+        #if TwelveDataStreamLogging
+            if let string = String(data: json, encoding: .utf8) {
+                logger.debug("Recieve: \(string)")
+            }
+        #endif
 
         do {
-            let response = try decoder.decode(TwelveDataEventResponse.self, from: json)
+            let event = try TwelvedataEvent.decode(from: json)
 
-            switch response.event {
-            case .price:
-                let price = try decoder.decode(TwelvedataPriceEvent.self, from: json)
-
-                priceEventsContinuation.yield(price)
-                #if TwelveDataStreamLogging
-                    logger.debug("Recieve price: \(price)")
-                #endif
-
-            case .subscribeStatus:
-                guard let subscribeStatus = try? decoder.decode(TwelveDataSubscribeStatusEvent.self, from: json) else {
-                    return
-                }
-
-                let success = subscribeStatus.success?.map(\.symbol) ?? []
-
-                subscribed = subscribed.union(success)
-
-                let failsSubscriptions = subscribeStatus.fails?.map(\.symbol) ?? []
-
-                faild = faild.union(failsSubscriptions)
-                #if TwelveDataStreamLogging
-                    logger.debug("Recieve subscribeStatus: success:\(success), faild:\(faild)")
-                #endif
-
-            case .heartbeat:
-                #if TwelveDataStreamLogging
-                    logger.debug("Recieve heartbeat")
-                #endif
-            }
+            try await coordinator.on(event: event)
 
         } catch {
             #if TwelveDataStreamLogging
                 logger.error("Catch error: \(error.localizedDescription)")
-            #endif
-        }
-    }
-
-    func scheduleInvalidation() {
-        Task {
-            do {
-                try await invalidateSubscription()
-            } catch {
-                #if TwelveDataStreamLogging
-                    logger.error("Catch error: \(error.localizedDescription)")
-                #endif
-            }
-        }
-    }
-
-    func subscriptionsDidChange() {
-        scheduleInvalidation()
-    }
-
-    func invalidateSubscription() async throws {
-        if symbols.isEmpty {
-            await socket.disconnect()
-            return
-        }
-
-        guard await socket.state == .connected else {
-            await socket.connect()
-            return
-        }
-
-        let needsSubsribe = symbols.subtracting(subscribed).subtracting(faild)
-        let needsUnSubsribe = subscribed.subtracting(symbols)
-
-        let encoder = JSONEncoder()
-
-        if needsSubsribe.isEmpty == false {
-            let subscribeRequest = TwelveDataRequest.subscribe(needsSubsribe)
-
-            let data = try encoder.encode(subscribeRequest)
-            if let json = String(data: data, encoding: .utf8) {
-                try await socket.send(json)
-            }
-
-            #if TwelveDataStreamLogging
-                logger.debug("Subscribe for: \(needsSubsribe)")
-            #endif
-        }
-
-        if needsUnSubsribe.isEmpty == false {
-            let unsubscribeRequest = TwelveDataRequest.unsubscribe(needsUnSubsribe)
-
-            let data = try encoder.encode(unsubscribeRequest)
-            if let json = String(data: data, encoding: .utf8) {
-                try await socket.send(json)
-            }
-
-            #if TwelveDataStreamLogging
-                logger.debug("Unsubscribe for: \(needsUnSubsribe)")
             #endif
         }
     }
