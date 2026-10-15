@@ -220,9 +220,10 @@ private extension TwelveDataWebsocket {
                 await coordinator.disconnect()
 
                 #if TwelveDataStreamLogging
+                guard let error else { return }
                     logger
                         .error(
-                            "didCompleteWithError from server: \(error?.localizedDescription)"
+                            "didCompleteWithError from server: \(error.localizedDescription)"
                         )
                 #endif
             }
