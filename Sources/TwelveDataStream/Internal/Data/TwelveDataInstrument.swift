@@ -4,7 +4,7 @@
 
 struct TwelveDataInstrument: Equatable, Decodable, Sendable {
     let symbol: String
-    let exchange: String
-    let type: String
+    let exchange: String?
+    let type: String?
     let country: String?
 }
