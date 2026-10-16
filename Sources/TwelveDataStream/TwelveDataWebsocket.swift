@@ -131,10 +131,6 @@ public extension TwelveDataWebsocket {
             let task = Task {
                 for await price in priceEvents {
                     continuation.yield(price)
-
-                    #if TwelveDataStreamLogging
-                        logger.debug("Send price to stream: \(price)")
-                    #endif
                 }
                 continuation.finish()
 
@@ -220,7 +216,7 @@ private extension TwelveDataWebsocket {
                 await coordinator.disconnect()
 
                 #if TwelveDataStreamLogging
-                guard let error else { return }
+                    guard let error else { return }
                     logger
                         .error(
                             "didCompleteWithError from server: \(error.localizedDescription)"
@@ -249,14 +245,19 @@ private extension TwelveDataWebsocket {
     }
 
     func onMessage(_ json: Data) async {
-        #if TwelveDataStreamLogging
-            if let string = String(data: json, encoding: .utf8) {
-                logger.debug("Recieve: \(string)")
-            }
-        #endif
-
         do {
             let event = try TwelvedataEvent.decode(from: json)
+
+            #if TwelveDataStreamLogging
+                if let string = String(data: json, encoding: .utf8) {
+                    switch event {
+                    case .price:
+                        logger.debug("Recieve: \(string)")
+                    default:
+                        logger.info("Recieve: \(string)")
+                    }
+                }
+            #endif
 
             try await coordinator.on(event: event)
 
