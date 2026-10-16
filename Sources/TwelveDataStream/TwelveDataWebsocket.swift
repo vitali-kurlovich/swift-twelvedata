@@ -173,7 +173,7 @@ extension TwelveDataWebsocket {
     func send(_ request: TwelveDataRequest) async throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.withoutEscapingSlashes]
-        
+
         let data = try encoder.encode(request)
 
         if let json = String(data: data, encoding: .utf8) {
@@ -200,6 +200,11 @@ private extension TwelveDataWebsocket {
             case .onConnect:
                 do {
                     try await coordinator.connect()
+
+                    #if TwelveDataStreamLogging
+                        logger.info("Connect to server")
+                    #endif
+
                 } catch {
                     #if TwelveDataStreamLogging
                         logger.error("\(error.localizedDescription)")
