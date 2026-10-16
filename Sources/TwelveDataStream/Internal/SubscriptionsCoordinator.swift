@@ -60,10 +60,6 @@ extension SubscriptionsCoordinator {
             success: success,
             fails: fails
         ):
-            guard status != .error else {
-                return
-            }
-
             let subsribed = success.map {
                 $0.symbol
             }
@@ -88,10 +84,6 @@ extension SubscriptionsCoordinator {
             success: success,
             fails: _
         ):
-            guard status != .error else {
-                return
-            }
-
             let unsubsribed = success.map {
                 $0.symbol
             }
@@ -111,10 +103,6 @@ extension SubscriptionsCoordinator {
             await socket.recieve(price: price)
 
         case let .reset(status: status):
-            guard status != .error else {
-                return
-            }
-
             switch state {
             case .idle, .disconnected:
                 assertionFailure()
