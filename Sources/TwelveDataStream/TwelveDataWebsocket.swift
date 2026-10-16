@@ -177,6 +177,10 @@ extension TwelveDataWebsocket {
 
         if let json = String(data: data, encoding: .utf8) {
             try await socket.send(json)
+
+            #if TwelveDataStreamLogging
+                logger.info("Send:\(json)")
+            #endif
         }
     }
 }

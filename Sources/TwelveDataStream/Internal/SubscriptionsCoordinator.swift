@@ -109,7 +109,6 @@ extension SubscriptionsCoordinator {
             case let .waitingForResponse(request):
                 assert(request.action == .reset)
                 state = .idle
-
                 activeSubscriptions.removeAll()
                 failedSubscriptions.removeAll()
 
