@@ -6,6 +6,6 @@ nonisolated enum Command: String, Equatable, Sendable {
     case price
     case forexPairs = "forex_pairs"
     case cryptoPairs = "cryptocurrencies"
-    case stocks = "stocks-list"
+    case stocks = "stocks"
     case commodities
 }
