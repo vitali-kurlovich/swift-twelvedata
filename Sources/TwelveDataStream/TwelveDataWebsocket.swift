@@ -16,7 +16,7 @@ public actor TwelveDataWebsocket {
     public typealias State = TwelveDataWebsocketState
     public typealias Price = TwelvedataPriceEvent
 
-    public init(configuration: Configuration, sessionConfiguration: URLSessionConfiguration = .default) {
+    public init(configuration: Configuration, sessionConfiguration: URLSessionConfiguration = .default) async {
         self.configuration = configuration
         let socket = WebSocket(
             configuration: .init(configuration),
@@ -30,12 +30,10 @@ public actor TwelveDataWebsocket {
         priceEvents = priceStream
         priceEventsContinuation = priceContinuation
 
-        Task {
-            await coordinator.setSocket(self)
+        await coordinator.setSocket(self)
 
-            await subscribeSocketEventsIfNeeds()
-            await subscribeMessages()
-        }
+        subscribeSocketEventsIfNeeds()
+        await subscribeMessages()
     }
 
     public var configuration: Configuration {
@@ -51,7 +49,7 @@ public actor TwelveDataWebsocket {
     private let priceEvents: AsyncStream<TwelvedataPriceEvent>
     private let priceEventsContinuation: AsyncStream<TwelvedataPriceEvent>.Continuation
 
-    private var socketEventsTask: Task<Void, Never>?
+    private var socketStateChangeTask: Task<Void, Never>?
 
     private var sceduleSubscriptionInvalidationTask: Task<Void, Never>?
 
@@ -59,18 +57,18 @@ public actor TwelveDataWebsocket {
 }
 
 public extension TwelveDataWebsocket {
-    init(apiKey: String, sessionConfiguration: URLSessionConfiguration = .default) {
+    init(apiKey: String, sessionConfiguration: URLSessionConfiguration = .default) async {
         let configuration = Configuration(apiKey: apiKey)
-        self.init(configuration: configuration, sessionConfiguration: sessionConfiguration)
+        await self.init(configuration: configuration, sessionConfiguration: sessionConfiguration)
     }
 
     init(
         baseUrl: URL,
         apiKey: String,
         sessionConfiguration: URLSessionConfiguration = .default
-    ) {
+    ) async {
         let configuration = Configuration(baseUrl: baseUrl, apiKey: apiKey)
-        self.init(configuration: configuration, sessionConfiguration: sessionConfiguration)
+        await self.init(configuration: configuration, sessionConfiguration: sessionConfiguration)
     }
 }
 
@@ -151,7 +149,16 @@ public extension TwelveDataWebsocket {
     func subscribe<S: Sequence>(symbols insert: S) async throws where S.Element == String {
         try await coordinator.subscribe(.init(insert))
 
-        if await coordinator.subscriptions.isEmpty == false, await socket.state != .connected {
+        let state = await socket.state
+
+        switch state {
+        case .disconnected, .failed:
+            break
+        case .connecting, .connected, .reconnecting:
+            return
+        }
+
+        if await coordinator.subscriptions.isEmpty == false {
             await socket.connect()
         }
     }
@@ -159,7 +166,10 @@ public extension TwelveDataWebsocket {
     func unsubscribe<S: Sequence>(symbols removed: S) async throws where S.Element == String {
         try await coordinator.unsubscribe(.init(removed))
 
-        if await coordinator.subscriptions.isEmpty, await socket.state == .connected {
+        let state = await socket.state
+        guard state == .connected else { return }
+
+        if await coordinator.subscriptions.isEmpty {
             await socket.disconnect()
         }
     }
@@ -188,49 +198,48 @@ extension TwelveDataWebsocket {
 
 private extension TwelveDataWebsocket {
     func subscribeSocketEventsIfNeeds() {
-        guard socketEventsTask == nil else { return }
-        socketEventsTask = Task {
-            await subscribeSocketEvents()
+        guard socketStateChangeTask == nil else { return }
+        socketStateChangeTask = Task {
+            await subscribeSocketStateChange()
         }
     }
 
-    func subscribeSocketEvents() async {
-        for await event in await socket.events {
-            switch event {
-            case .onConnect:
-                do {
+    func subscribeSocketStateChange() async {
+        for await state in await socket.states {
+            do {
+                switch state {
+                case .disconnected:
+                    #if TwelveDataStreamLogging
+                        logger.info("Disconnect from server")
+                    #endif
+                    await coordinator.disconnect()
+
+                case .connecting:
+                    #if TwelveDataStreamLogging
+                        logger.info("Connecting to server")
+                    #endif
+
+                case .connected:
+                    #if TwelveDataStreamLogging
+                        logger.info("Connected to server")
+                    #endif
                     try await coordinator.connect()
 
+                case let .reconnecting(attempt: attempt, delay: delay):
                     #if TwelveDataStreamLogging
-                        logger.info("Connect to server")
+                        logger.info("Reconnecting to server - attempt:\(attempt), delay:\(delay)")
                     #endif
+                    await coordinator.disconnect()
 
-                } catch {
+                case let .failed(error):
                     #if TwelveDataStreamLogging
-                        logger.error("\(error.localizedDescription)")
+                        logger.error("\(error)")
                     #endif
+                    await coordinator.disconnect()
                 }
-
+            } catch {
                 #if TwelveDataStreamLogging
-                    logger.info("Connect to server")
-                #endif
-
-            case .onDisconnet:
-                await coordinator.disconnect()
-
-                #if TwelveDataStreamLogging
-                    logger.info("Disconnect from server")
-                #endif
-
-            case let .didCompleteWithError(_, _, error):
-                await coordinator.disconnect()
-
-                #if TwelveDataStreamLogging
-                    guard let error else { return }
-                    logger
-                        .error(
-                            "didCompleteWithError from server: \(error.localizedDescription)"
-                        )
+                    logger.error("\(error)")
                 #endif
             }
         }

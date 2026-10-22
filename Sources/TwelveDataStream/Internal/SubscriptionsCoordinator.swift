@@ -9,7 +9,7 @@
 #endif
 
 actor SubscriptionsCoordinator {
-    unowned var socket: TwelveDataWebsocket!
+    weak var socket: TwelveDataWebsocket?
 
     func setSocket(_ socket: TwelveDataWebsocket) {
         self.socket = socket
@@ -54,6 +54,8 @@ extension SubscriptionsCoordinator {
 
 extension SubscriptionsCoordinator {
     func on(event: TwelvedataEvent) async throws {
+        guard let socket else { return }
+
         switch event {
         case let .subscribe(
             status: status,
@@ -138,6 +140,8 @@ extension SubscriptionsCoordinator {
 
 private extension SubscriptionsCoordinator {
     func invalidateSubscriptions() async throws {
+        guard let socket else { return }
+
         switch state {
         case .idle:
             break
