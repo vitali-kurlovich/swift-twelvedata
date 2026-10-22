@@ -16,7 +16,7 @@ public actor TwelveDataWebsocket {
     public typealias State = TwelveDataWebsocketState
     public typealias Price = TwelvedataPriceEvent
 
-    public init(configuration: Configuration, sessionConfiguration: URLSessionConfiguration = .default) async {
+    public init(configuration: Configuration, sessionConfiguration: URLSessionConfiguration = .default) {
         self.configuration = configuration
         let socket = WebSocket(
             configuration: .init(configuration),
@@ -29,11 +29,12 @@ public actor TwelveDataWebsocket {
         let (priceStream, priceContinuation) = AsyncStream<TwelvedataPriceEvent>.makeStream()
         priceEvents = priceStream
         priceEventsContinuation = priceContinuation
+    }
 
-        await coordinator.setSocket(self)
-
-        subscribeSocketEventsIfNeeds()
-        await subscribeMessages()
+    deinit {
+        setupTask?.cancel()
+        socketStateChangeTask?.cancel()
+        messagesTask?.cancel()
     }
 
     public var configuration: Configuration {
@@ -49,26 +50,29 @@ public actor TwelveDataWebsocket {
     private let priceEvents: AsyncStream<TwelvedataPriceEvent>
     private let priceEventsContinuation: AsyncStream<TwelvedataPriceEvent>.Continuation
 
+    private var setupTask: Task<Void, Never>?
     private var socketStateChangeTask: Task<Void, Never>?
+    private var messagesTask: Task<Void, Never>?
 
-    private var sceduleSubscriptionInvalidationTask: Task<Void, Never>?
+    /// Connection intent: `true` while there are subscriptions to serve.
+    private var wantsConnection = false
 
-    private var coordinator = SubscriptionsCoordinator()
+    private let coordinator = SubscriptionsCoordinator()
 }
 
 public extension TwelveDataWebsocket {
-    init(apiKey: String, sessionConfiguration: URLSessionConfiguration = .default) async {
+    init(apiKey: String, sessionConfiguration: URLSessionConfiguration = .default) {
         let configuration = Configuration(apiKey: apiKey)
-        await self.init(configuration: configuration, sessionConfiguration: sessionConfiguration)
+        self.init(configuration: configuration, sessionConfiguration: sessionConfiguration)
     }
 
     init(
         baseUrl: URL,
         apiKey: String,
         sessionConfiguration: URLSessionConfiguration = .default
-    ) async {
+    ) {
         let configuration = Configuration(baseUrl: baseUrl, apiKey: apiKey)
-        await self.init(configuration: configuration, sessionConfiguration: sessionConfiguration)
+        self.init(configuration: configuration, sessionConfiguration: sessionConfiguration)
     }
 }
 
@@ -147,31 +151,13 @@ public extension TwelveDataWebsocket {
     }
 
     func subscribe<S: Sequence>(symbols insert: S) async throws where S.Element == String {
-        try await coordinator.subscribe(.init(insert))
-
-        let state = await socket.state
-
-        switch state {
-        case .disconnected, .failed:
-            break
-        case .connecting, .connected, .reconnecting:
-            return
-        }
-
-        if await coordinator.subscriptions.isEmpty == false {
-            await socket.connect()
-        }
+        let insert = Set(insert)
+        try await updateSubscriptions { try await $0.subscribe(insert) }
     }
 
     func unsubscribe<S: Sequence>(symbols removed: S) async throws where S.Element == String {
-        try await coordinator.unsubscribe(.init(removed))
-
-        let state = await socket.state
-        guard state == .connected else { return }
-
-        if await coordinator.subscriptions.isEmpty {
-            await socket.disconnect()
-        }
+        let removed = Set(removed)
+        try await updateSubscriptions { try await $0.unsubscribe(removed) }
     }
 }
 
@@ -197,68 +183,118 @@ extension TwelveDataWebsocket {
 }
 
 private extension TwelveDataWebsocket {
-    func subscribeSocketEventsIfNeeds() {
-        guard socketStateChangeTask == nil else { return }
-        socketStateChangeTask = Task {
-            await subscribeSocketStateChange()
+    /// Wires the coordinator and starts observing the socket. Runs once, and always
+    /// completes before the first `socket.connect()`, so no state change is missed.
+    func setUpIfNeeds() async {
+        if setupTask == nil {
+            setupTask = Task { [weak self] in
+                await self?.setUp()
+            }
+        }
+        await setupTask?.value
+    }
+
+    func setUp() async {
+        await coordinator.setSocket(self)
+
+        let states = await socket.states
+        let messages = await socket.messages
+
+        socketStateChangeTask = Task { [weak self] in
+            for await state in states {
+                await self?.on(state: state)
+            }
+        }
+
+        messagesTask = Task { [weak self] in
+            for await message in messages {
+                await self?.on(message: message)
+            }
         }
     }
 
-    func subscribeSocketStateChange() async {
-        for await state in await socket.states {
+    func updateSubscriptions(_ update: (SubscriptionsCoordinator) async throws -> Void) async throws {
+        await setUpIfNeeds()
+
+        do {
+            try await update(coordinator)
+        } catch {
+            await invalidateConnection()
+            throw error
+        }
+        await invalidateConnection()
+    }
+
+    /// Connects while there are subscriptions and disconnects when there are none.
+    /// Loops because `subscriptions` may change while `connect`/`disconnect` is awaited.
+    func invalidateConnection() async {
+        while true {
+            let needsConnection = await coordinator.subscriptions.isEmpty == false
+            guard needsConnection != wantsConnection else { return }
+            wantsConnection = needsConnection
+
+            if needsConnection {
+                await setUpIfNeeds()
+                await socket.connect()
+            } else {
+                await socket.disconnect()
+            }
+        }
+    }
+
+    func on(state: WebSocket.State) async {
+        switch state {
+        case .disconnected:
+            #if TwelveDataStreamLogging
+                logger.info("Disconnect from server")
+            #endif
+            await coordinator.disconnect()
+
+        case .connecting:
+            #if TwelveDataStreamLogging
+                logger.info("Connecting to server")
+            #endif
+
+        case .connected:
+            #if TwelveDataStreamLogging
+                logger.info("Connected to server")
+            #endif
             do {
-                switch state {
-                case .disconnected:
-                    #if TwelveDataStreamLogging
-                        logger.info("Disconnect from server")
-                    #endif
-                    await coordinator.disconnect()
-
-                case .connecting:
-                    #if TwelveDataStreamLogging
-                        logger.info("Connecting to server")
-                    #endif
-
-                case .connected:
-                    #if TwelveDataStreamLogging
-                        logger.info("Connected to server")
-                    #endif
-                    try await coordinator.connect()
-
-                case let .reconnecting(attempt: attempt, delay: delay):
-                    #if TwelveDataStreamLogging
-                        logger.info("Reconnecting to server - attempt:\(attempt), delay:\(delay)")
-                    #endif
-                    await coordinator.disconnect()
-
-                case let .failed(error):
-                    #if TwelveDataStreamLogging
-                        logger.error("\(error)")
-                    #endif
-                    await coordinator.disconnect()
-                }
+                try await coordinator.connect()
             } catch {
                 #if TwelveDataStreamLogging
                     logger.error("\(error)")
                 #endif
             }
+
+        case let .reconnecting(attempt: attempt, delay: delay):
+            // The socket always reports `.disconnected` before `.reconnecting`.
+            #if TwelveDataStreamLogging
+                logger.info("Reconnecting to server - attempt:\(attempt), delay:\(delay)")
+            #endif
+
+        case let .failed(error):
+            #if TwelveDataStreamLogging
+                logger.error("\(error)")
+            #endif
+            // The socket gave up, so the next subscribe or configuration update reconnects.
+            wantsConnection = false
+            await coordinator.disconnect()
         }
     }
 
-    func subscribeMessages() async {
-        for await message in await socket.messages {
-            switch message {
-            case let .data(data):
-                await onMessage(data)
+    func on(message: WebSocketMessage) async {
+        switch message {
+        case let .data(data):
+            await onMessage(data)
 
-            case let .text(string):
-                if let data = string.data(using: .utf8) {
-                    await onMessage(data)
-                } else {
-                    #if TwelveDataStreamLogging
-                        logger.error("Can't convert string to Data \(string)")
-                    #endif
-                }
+        case let .text(string):
+            if let data = string.data(using: .utf8) {
+                await onMessage(data)
+            } else {
+                #if TwelveDataStreamLogging
+                    logger.error("Can't convert string to Data \(string)")
+                #endif
             }
         }
     }
@@ -290,6 +326,8 @@ private extension TwelveDataWebsocket {
     func invalidateConfiguration() {
         Task {
             await socket.update(configuration: .init(configuration))
+            // Recovers from `.failed`, e.g. after an invalid API key was replaced.
+            await invalidateConnection()
         }
         #if TwelveDataStreamLogging
             logger.debug("Update configuration")
