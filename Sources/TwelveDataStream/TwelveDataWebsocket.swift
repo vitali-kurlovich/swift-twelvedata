@@ -35,6 +35,7 @@ public actor TwelveDataWebsocket {
         setupTask?.cancel()
         socketStateChangeTask?.cancel()
         messagesTask?.cancel()
+        configurationTask?.cancel()
     }
 
     public var configuration: Configuration {
@@ -53,6 +54,7 @@ public actor TwelveDataWebsocket {
     private var setupTask: Task<Void, Never>?
     private var socketStateChangeTask: Task<Void, Never>?
     private var messagesTask: Task<Void, Never>?
+    private var configurationTask: Task<Void, Never>?
 
     /// Connection intent: `true` while there are subscriptions to serve.
     private var wantsConnection = false
@@ -151,13 +153,13 @@ public extension TwelveDataWebsocket {
     }
 
     func subscribe<S: Sequence>(symbols insert: S) async throws where S.Element == String {
-        let insert = Set(insert)
-        try await updateSubscriptions { try await $0.subscribe(insert) }
+        try await coordinator.subscribe(.init(insert))
+        await invalideSubscriptions()
     }
 
     func unsubscribe<S: Sequence>(symbols removed: S) async throws where S.Element == String {
-        let removed = Set(removed)
-        try await updateSubscriptions { try await $0.unsubscribe(removed) }
+        try await coordinator.unsubscribe(.init(removed))
+        await invalideSubscriptions()
     }
 }
 
@@ -178,25 +180,6 @@ extension TwelveDataWebsocket {
             #if TwelveDataStreamLogging
                 logger.info("Send:\(json)")
             #endif
-        }
-    }
-}
-
-extension TwelveDataWebsocket {
-    /// Connects while there are subscriptions and disconnects when there are none.
-    /// Loops because `subscriptions` may change while `connect`/`disconnect` is awaited.
-    func invalidateConnection() async {
-        while true {
-            let needsConnection = await coordinator.subscriptions.isEmpty == false
-            guard needsConnection != wantsConnection else { return }
-            wantsConnection = needsConnection
-
-            if needsConnection {
-                await setUpIfNeeds()
-                await socket.connect()
-            } else {
-                await socket.disconnect()
-            }
         }
     }
 }
@@ -230,18 +213,6 @@ private extension TwelveDataWebsocket {
                 await self?.on(message: message)
             }
         }
-    }
-
-    func updateSubscriptions(_ update: (SubscriptionsCoordinator) async throws -> Void) async throws {
-        await setUpIfNeeds()
-
-        do {
-            try await update(coordinator)
-        } catch {
-            await invalidateConnection()
-            throw error
-        }
-        await invalidateConnection()
     }
 
     func on(state: WebSocket.State) async {
@@ -325,14 +296,32 @@ private extension TwelveDataWebsocket {
         }
     }
 
-    func invalidateConfiguration() {
-        Task {
-            await socket.update(configuration: .init(configuration))
-            // Recovers from `.failed`, e.g. after an invalid API key was replaced.
-            await invalidateConnection()
+    func invalideSubscriptions() async {
+        await setUpIfNeeds()
+
+        let subscriptionsExists = await coordinator.subscriptions.isEmpty == false
+        let state = await socket.state
+
+        switch state {
+        case .disconnected:
+            if subscriptionsExists {
+                await socket.connect()
+            }
+
+        case .connecting, .connected, .reconnecting:
+            if subscriptionsExists == false {
+                await socket.disconnect()
+            }
+
+        default:
+            break
         }
-        #if TwelveDataStreamLogging
-            logger.debug("Update configuration")
-        #endif
+    }
+
+    func invalidateConfiguration() {
+        configurationTask?.cancel()
+        configurationTask = Task {
+            await invalideSubscriptions()
+        }
     }
 }
