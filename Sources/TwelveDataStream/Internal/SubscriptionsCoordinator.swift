@@ -145,10 +145,7 @@ private extension SubscriptionsCoordinator {
         switch state {
         case .idle:
             break
-        case .disconnected:
-            await socket.invalidateConnection()
-            return
-        case .waitingForResponse:
+        case .waitingForResponse, .disconnected:
             return
         }
 
