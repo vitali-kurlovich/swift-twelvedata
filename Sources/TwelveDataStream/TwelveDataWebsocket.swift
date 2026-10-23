@@ -56,9 +56,6 @@ public actor TwelveDataWebsocket {
     private var messagesTask: Task<Void, Never>?
     private var configurationTask: Task<Void, Never>?
 
-    /// Connection intent: `true` while there are subscriptions to serve.
-    private var wantsConnection = false
-
     private let coordinator = SubscriptionsCoordinator()
 }
 
@@ -250,8 +247,6 @@ private extension TwelveDataWebsocket {
             #if TwelveDataStreamLogging
                 logger.error("\(error)")
             #endif
-            // The socket gave up, so the next subscribe or configuration update reconnects.
-            wantsConnection = false
             await coordinator.disconnect()
         }
     }
