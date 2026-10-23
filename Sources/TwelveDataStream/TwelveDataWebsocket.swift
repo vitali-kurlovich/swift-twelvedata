@@ -182,6 +182,25 @@ extension TwelveDataWebsocket {
     }
 }
 
+extension TwelveDataWebsocket {
+    /// Connects while there are subscriptions and disconnects when there are none.
+    /// Loops because `subscriptions` may change while `connect`/`disconnect` is awaited.
+    func invalidateConnection() async {
+        while true {
+            let needsConnection = await coordinator.subscriptions.isEmpty == false
+            guard needsConnection != wantsConnection else { return }
+            wantsConnection = needsConnection
+
+            if needsConnection {
+                await setUpIfNeeds()
+                await socket.connect()
+            } else {
+                await socket.disconnect()
+            }
+        }
+    }
+}
+
 private extension TwelveDataWebsocket {
     /// Wires the coordinator and starts observing the socket. Runs once, and always
     /// completes before the first `socket.connect()`, so no state change is missed.
@@ -223,23 +242,6 @@ private extension TwelveDataWebsocket {
             throw error
         }
         await invalidateConnection()
-    }
-
-    /// Connects while there are subscriptions and disconnects when there are none.
-    /// Loops because `subscriptions` may change while `connect`/`disconnect` is awaited.
-    func invalidateConnection() async {
-        while true {
-            let needsConnection = await coordinator.subscriptions.isEmpty == false
-            guard needsConnection != wantsConnection else { return }
-            wantsConnection = needsConnection
-
-            if needsConnection {
-                await setUpIfNeeds()
-                await socket.connect()
-            } else {
-                await socket.disconnect()
-            }
-        }
     }
 
     func on(state: WebSocket.State) async {
